@@ -249,7 +249,7 @@ function SobreScreen({ navigation }: SobreProps) {
       </Appbar.Header>
       <View style={[styles.screenContainer, { padding: 16 }]}>
         <Card>
-          <Card.Title title="Chef de Bolso v1.0" left={(p) => <Icon source="information" {...p} />} />
+          <Card.Title title="Busca Chef v1.0" left={(p) => <Icon source="information" {...p} />} />
           <Card.Content>
             <Paragraph>App desenvolvido com React Native Paper e TheMealDB API.</Paragraph>
           </Card.Content>
