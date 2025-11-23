@@ -1,6 +1,6 @@
 import 'react-native-gesture-handler';
 import * as React from 'react';
-import { View, StyleSheet, FlatList, ScrollView, Image, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, FlatList, ScrollView, Image } from 'react-native';
 import { NavigationContainer, DrawerActions, DefaultTheme as NavLight } from '@react-navigation/native';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -23,7 +23,6 @@ import {
 
 // --- 1. Tipagens (Types) ---
 
-// Interface simplificada para a Receita (Meal) da API
 interface Meal {
   idMeal: string;
   strMeal: string;
@@ -34,7 +33,6 @@ interface Meal {
   strTags?: string;
 }
 
-// Interface para Categorias
 interface Category {
   idCategory: string;
   strCategory: string;
@@ -42,7 +40,7 @@ interface Category {
 }
 
 type RootDrawerParamList = {
-  Principal: undefined;
+  'Início': undefined;
   Sobre: undefined;
 };
 
@@ -96,7 +94,7 @@ function Header({ title, navigation }: any) {
   );
 }
 
-// --- TELA HOME: Destaques e Categorias ---
+// --- TELA HOME ---
 function HomeScreen({ navigation }: any) {
   const [randomMeal, setRandomMeal] = React.useState<Meal | null>(null);
   const [categories, setCategories] = React.useState<Category[]>([]);
@@ -105,11 +103,9 @@ function HomeScreen({ navigation }: any) {
   const loadData = async () => {
     setLoading(true);
     try {
-      // Busca Receita Aleatória
       const resMeal = await fetch('https://www.themealdb.com/api/json/v1/1/random.php');
       const jsonMeal = await resMeal.json();
       
-      // Busca Categorias
       const resCat = await fetch('https://www.themealdb.com/api/json/v1/1/categories.php');
       const jsonCat = await resCat.json();
 
@@ -136,39 +132,43 @@ function HomeScreen({ navigation }: any) {
   }
 
   return (
-    <ScrollView style={styles.screen}>
-      <Title style={styles.sectionTitle}>Sugestão do Chef 👨‍🍳</Title>
-      {randomMeal && (
-        <Card mode="elevated" onPress={() => navigation.navigate('Detalhes', { meal: randomMeal })} style={styles.cardSpacing}>
-          <Card.Cover source={{ uri: randomMeal.strMealThumb }} />
-          <Card.Title 
-            title={randomMeal.strMeal} 
-            subtitle={`${randomMeal.strCategory} | ${randomMeal.strArea}`}
-            left={(props) => <Avatar.Icon {...props} icon="food" style={{ backgroundColor: '#F97316' }} />}
-          />
-        </Card>
-      )}
-
-      <Title style={styles.sectionTitle}>Categorias</Title>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 4 }}>
-        {categories.map((cat) => (
-          <Card key={cat.idCategory} mode="outlined" style={styles.catCard} onPress={() => alert(`Categoria: ${cat.strCategory}`)}>
-            <Card.Cover source={{ uri: cat.strCategoryThumb }} style={styles.catImage} />
-            <Card.Content>
-              <Text variant="labelLarge" style={{ textAlign: 'center', marginTop: 5 }}>{cat.strCategory}</Text>
-            </Card.Content>
+    <>
+      {/* Header na tela */}
+      <Header title="Destaques" navigation={navigation} />
+      <ScrollView style={styles.screen}>
+        <Title style={styles.sectionTitle}>Sugestão do Chef 👨‍🍳</Title>
+        {randomMeal && (
+          <Card mode="elevated" onPress={() => navigation.navigate('Detalhes', { meal: randomMeal })} style={styles.cardSpacing}>
+            <Card.Cover source={{ uri: randomMeal.strMealThumb }} />
+            <Card.Title 
+              title={randomMeal.strMeal} 
+              subtitle={`${randomMeal.strCategory} | ${randomMeal.strArea}`}
+              left={(props) => <Avatar.Icon {...props} icon="food" style={{ backgroundColor: '#F97316' }} />}
+            />
           </Card>
-        ))}
+        )}
+
+        <Title style={styles.sectionTitle}>Categorias</Title>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 4 }}>
+          {categories.map((cat) => (
+            <Card key={cat.idCategory} mode="outlined" style={styles.catCard} onPress={() => alert(`Categoria: ${cat.strCategory}`)}>
+              <Card.Cover source={{ uri: cat.strCategoryThumb }} style={styles.catImage} />
+              <Card.Content>
+                <Text variant="labelLarge" style={{ textAlign: 'center', marginTop: 5 }}>{cat.strCategory}</Text>
+              </Card.Content>
+            </Card>
+          ))}
+        </ScrollView>
+        
+        <Button mode="contained" onPress={loadData} style={{ marginVertical: 20 }} icon="refresh">
+          Nova Sugestão
+        </Button>
       </ScrollView>
-      
-      <Button mode="contained" onPress={loadData} style={{ marginVertical: 20 }} icon="refresh">
-        Nova Sugestão
-      </Button>
-    </ScrollView>
+    </>
   );
 }
 
-// --- TELA BUSCAR: Pesquisa de Receitas ---
+// --- TELA BUSCAR ---
 function SearchScreen({ navigation }: any) {
   const [searchQuery, setSearchQuery] = React.useState('');
   const [meals, setMeals] = React.useState<Meal[]>([]);
@@ -191,43 +191,46 @@ function SearchScreen({ navigation }: any) {
   };
 
   return (
-    <View style={styles.screenContainer}>
-      <View style={{ padding: 16 }}>
-        <Searchbar
-          placeholder="Buscar receita (ex: Cake, Pie)"
-          onChangeText={onChangeSearch}
-          value={searchQuery}
-          onSubmitEditing={performSearch}
-          onIconPress={performSearch}
-          elevation={2}
-        />
-      </View>
+    <>
+      <Header title="Buscar Receitas" navigation={navigation} />
+      <View style={styles.screenContainer}>
+        <View style={{ padding: 16 }}>
+          <Searchbar
+            placeholder="Buscar (ex: Cake, Pie)"
+            onChangeText={onChangeSearch}
+            value={searchQuery}
+            onSubmitEditing={performSearch}
+            onIconPress={performSearch}
+            elevation={2}
+          />
+        </View>
 
-      {loading ? (
-        <ActivityIndicator style={{ marginTop: 20 }} color="#F97316" />
-      ) : (
-        <FlatList
-          data={meals}
-          keyExtractor={(item) => item.idMeal}
-          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16 }}
-          ListEmptyComponent={<Text style={{ textAlign: 'center', marginTop: 20, opacity: 0.5 }}>Nenhuma receita encontrada.</Text>}
-          renderItem={({ item }) => (
-            <Card 
-              mode="elevated" 
-              style={{ marginBottom: 12 }}
-              onPress={() => navigation.navigate('Detalhes', { meal: item })}
-            >
-              <Card.Title 
-                title={item.strMeal} 
-                subtitle={item.strCategory}
-                left={(props) => <Avatar.Image {...props} size={40} source={{ uri: item.strMealThumb }} />}
-                right={(props) => <Icon source="chevron-right" {...props} />}
-              />
-            </Card>
-          )}
-        />
-      )}
-    </View>
+        {loading ? (
+          <ActivityIndicator style={{ marginTop: 20 }} color="#F97316" />
+        ) : (
+          <FlatList
+            data={meals}
+            keyExtractor={(item) => item.idMeal}
+            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16 }}
+            ListEmptyComponent={<Text style={{ textAlign: 'center', marginTop: 20, opacity: 0.5 }}>Nenhuma receita encontrada.</Text>}
+            renderItem={({ item }) => (
+              <Card 
+                mode="elevated" 
+                style={{ marginBottom: 12 }}
+                onPress={() => navigation.navigate('Detalhes', { meal: item })}
+              >
+                <Card.Title 
+                  title={item.strMeal} 
+                  subtitle={item.strCategory}
+                  left={(props) => <Avatar.Image {...props} size={40} source={{ uri: item.strMealThumb }} />}
+                  right={(props) => <Icon source="chevron-right" {...props} />}
+                />
+              </Card>
+            )}
+          />
+        )}
+      </View>
+    </>
   );
 }
 
@@ -265,6 +268,7 @@ function DetalhesScreen({ route, navigation }: DetalhesProps) {
 function TabsScreen() {
   return (
     <Tabs.Navigator
+      id={undefined}
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarActiveTintColor: '#F97316',
@@ -283,13 +287,10 @@ function TabsScreen() {
 
 function StackPrincipal({ navigation }: any) {
   return (
-    <>
-      <Header title="Chef de Bolso" navigation={navigation} />
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="Tabs" component={TabsScreen} />
-        <Stack.Screen name="Detalhes" component={DetalhesScreen} />
-      </Stack.Navigator>
-    </>
+    <Stack.Navigator id={undefined} screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Tabs" component={TabsScreen} />
+      <Stack.Screen name="Detalhes" component={DetalhesScreen} />
+    </Stack.Navigator>
   );
 }
 
@@ -314,6 +315,7 @@ export default function App() {
     <PaperProvider theme={chefTheme}>
       <NavigationContainer theme={navTheme}>
         <Drawer.Navigator
+          id={undefined}
           screenOptions={{
             headerShown: false,
             drawerActiveTintColor: '#F97316',
@@ -321,7 +323,7 @@ export default function App() {
           }}
         >
           <Drawer.Screen
-            name="Principal"
+            name="Início"
             component={StackPrincipal}
             options={{
               drawerIcon: ({ color, size }) => <Icon source="home" size={size} color={color} />,
